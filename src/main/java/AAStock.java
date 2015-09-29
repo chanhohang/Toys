@@ -18,7 +18,9 @@ public class AAStock implements Runnable
     private static int VALUE_RANGE = 50;
 
 //    private final String chi_stock_url = "http://www.aastocks.com/tc/ltp/rtquote.aspx?symbol=";
-    private final String eng_stock_url = "http://www.aastocks.com/en/LTP/RTQuote.aspx?&symbol=";
+    private final String eng_stock_url_referrer = "http://www.aastocks.com/tc/ltp/RTQuote.aspx?S=Y&Symbol=";
+    private final String eng_stock_url = "http://www.aastocks.com/en/LTP/RTQuoteContent.aspx?&symbol=";
+    private final String eng_stock_url_suffix = "&process=y";
 //    private final String eng_stock_url = "http://www.aastocks.com/en/stock/BasicQuote.aspx?&symbol=";
 //    private final String eng_index_url = "http://www.aastocks.com/EN/market/HKIndex.aspx?Index=";
     private final String eng_index_url = "http://www.aastocks.com/en/stocks/market/index/hk-index-con.aspx?index=";
@@ -34,11 +36,8 @@ public class AAStock implements Runnable
 //        System.getProperties().put("http.proxyPassword", "somePassword");
         
     }
-    public byte[] getHTMLByte(URL url) throws IOException
+    public byte[] getHTMLByte(HttpURLConnection conn) throws IOException
     {
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection(); 
-        conn.connect();
-        
         InputStream is = conn.getInputStream();
         
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -101,11 +100,17 @@ public class AAStock implements Runnable
     
     protected void onStockCode(String line) throws Exception
     {
-        String targetURL = eng_stock_url + numFormat.format(Double.parseDouble(line));
+        String stockCode = numFormat.format(Double.parseDouble(line));
+		String targetURL = eng_stock_url + stockCode + eng_stock_url_suffix;
 
         URL url = new URL(targetURL);
-
-        byte[] result = getHTMLByte(url);
+        
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection(); 
+        conn.setRequestProperty("Referer", eng_stock_url_referrer + stockCode);
+        conn.connect();
+        
+        
+        byte[] result = getHTMLByte(conn);
         StockQuoteData data = parseStockCodeHTMLByte(result);
         
         System.out.println(data);
@@ -118,7 +123,10 @@ public class AAStock implements Runnable
 
         URL url = new URL(targetURL);
 
-        byte[] result = getHTMLByte(url);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection(); 
+        conn.connect();
+
+        byte[] result = getHTMLByte(conn);
 
         IndexQuoteData data = parseIndexHTMLByte(result, index);
         
