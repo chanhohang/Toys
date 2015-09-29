@@ -8,38 +8,39 @@ import java.text.DecimalFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.apache.commons.lang3.StringUtils;
 
 
 public class AAStock implements Runnable
 {
     private static boolean isDebug = false;
-    
+
     private static int TAG_RANGE = 1000;
     private static int VALUE_RANGE = 50;
 
-//    private final String chi_stock_url = "http://www.aastocks.com/tc/ltp/rtquote.aspx?symbol=";
+    //    private final String chi_stock_url = "http://www.aastocks.com/tc/ltp/rtquote.aspx?symbol=";
     private final String eng_stock_url_referrer = "http://www.aastocks.com/tc/ltp/RTQuote.aspx?S=Y&Symbol=";
     private final String eng_stock_url = "http://www.aastocks.com/en/LTP/RTQuoteContent.aspx?&symbol=";
     private final String eng_stock_url_suffix = "&process=y";
-//    private final String eng_stock_url = "http://www.aastocks.com/en/stock/BasicQuote.aspx?&symbol=";
-//    private final String eng_index_url = "http://www.aastocks.com/EN/market/HKIndex.aspx?Index=";
+    //    private final String eng_stock_url = "http://www.aastocks.com/en/stock/BasicQuote.aspx?&symbol=";
+    //    private final String eng_index_url = "http://www.aastocks.com/EN/market/HKIndex.aspx?Index=";
     private final String eng_index_url = "http://www.aastocks.com/en/stocks/market/index/hk-index-con.aspx?index=";
-    
+
     private final DecimalFormat numFormat = new DecimalFormat("00000");
-    
+
     public AAStock()
     {
         // Setup Proxy if Proxy is required.
-//        System.getProperties().put("http.proxyHost", "someProxyURL");
-//        System.getProperties().put("http.proxyPort", "someProxyPort");
-//        System.getProperties().put("http.proxyUser", "someUserName");
-//        System.getProperties().put("http.proxyPassword", "somePassword");
-        
+        //        System.getProperties().put("http.proxyHost", "someProxyURL");
+        //        System.getProperties().put("http.proxyPort", "someProxyPort");
+        //        System.getProperties().put("http.proxyUser", "someUserName");
+        //        System.getProperties().put("http.proxyPassword", "somePassword");
+
     }
     public byte[] getHTMLByte(HttpURLConnection conn) throws IOException
     {
         InputStream is = conn.getInputStream();
-        
+
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         String result = "";
         String line = null;
@@ -47,21 +48,21 @@ public class AAStock implements Runnable
         {
             result += line + "\n";
         }
-       
+
         return result.getBytes();
-        
+
     }
 
-    
+
     public static void main(String[] args)
     {
-        
-       AAStock aaStock = new AAStock();
-       
-       ExecutorService es = Executors.newSingleThreadExecutor();
-       
-       Future fut = es.submit(aaStock);
-       
+
+        AAStock aaStock = new AAStock();
+
+        ExecutorService es = Executors.newSingleThreadExecutor();
+
+        Future fut = es.submit(aaStock);
+
     }
 
 
@@ -74,10 +75,10 @@ public class AAStock implements Runnable
             String line= null;
             while ((line=br.readLine()) != null)
             {
-            	if (line.trim().length() == 0)
-            	{
-            		continue;
-            	}
+                if (line.trim().length() == 0)
+                {
+                    continue;
+                }
                 if ("HSI".compareToIgnoreCase(line) == 0)
                 {
                     onIndex("HSI");
@@ -97,22 +98,22 @@ public class AAStock implements Runnable
             e.printStackTrace();
         }
     }
-    
+
     protected void onStockCode(String line) throws Exception
     {
         String stockCode = numFormat.format(Double.parseDouble(line));
-		String targetURL = eng_stock_url + stockCode + eng_stock_url_suffix;
+        String targetURL = eng_stock_url + stockCode + eng_stock_url_suffix;
 
         URL url = new URL(targetURL);
-        
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection(); 
+
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestProperty("Referer", eng_stock_url_referrer + stockCode);
         conn.connect();
-        
-        
+
+
         byte[] result = getHTMLByte(conn);
         StockQuoteData data = parseStockCodeHTMLByte(result);
-        
+
         System.out.println(data);
     }
 
@@ -123,13 +124,13 @@ public class AAStock implements Runnable
 
         URL url = new URL(targetURL);
 
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection(); 
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.connect();
 
         byte[] result = getHTMLByte(conn);
 
         IndexQuoteData data = parseIndexHTMLByte(result, index);
-        
+
         System.out.println(data);
     }
 
@@ -143,7 +144,7 @@ public class AAStock implements Runnable
             System.out.println(htmlStr);
         }
         boolean isPos = false;
-        
+
         // Get Last
         String last_substring = htmlStr.substring(htmlStr.indexOf(("Last\n")));
 
@@ -156,7 +157,7 @@ public class AAStock implements Runnable
         {
             data.last = extractStr(last_substring, "Last\n", "<span class=\"unc bold\">",  "</span>");
         }
-        
+
         // Get Change
         isPos = false;
         data.chg = extractStr(last_substring, "Chg", "<span class=\"neg bold\">", "</span>");
@@ -170,7 +171,7 @@ public class AAStock implements Runnable
             data.chg = extractStr(last_substring, "Chg", "<span class=\"unc bold\">",  "</span>");
         }
         data.chg = addSign(data.chg, isPos);
-        
+
         // Get Change %
         isPos = false;
         data.chg_percent = extractStr(last_substring, "Chg(%)", "<span class=\"neg bold\">", "</span>");
@@ -184,10 +185,10 @@ public class AAStock implements Runnable
             data.chg_percent = extractStr(last_substring, "Chg(%)", "<span class=\"unc bold\">",  "</span>");
         }
         data.chg_percent = addSign(data.chg_percent, isPos);
-        
+
         // Get Volume
         data.volume = extractStr(htmlStr, "Volume", "<strong>", "</strong>");
-        
+
         // Get Market Cap
         data.market_cap = extractStr(htmlStr, "Market Cap", "<strong>", "</strong>");
 
@@ -199,10 +200,10 @@ public class AAStock implements Runnable
 
         // Get P/E Ratio
         data.PE = extractStr(htmlStr, "P/E Ratio", "<strong>", "</strong>");
-        
+
         // Get Yield
         data.yield = extractStr(htmlStr, "Yield", "<strong>", "</strong>");
-       
+
         // Get Lot Size
         data.lot_size = extractStr(htmlStr, "Lot Size", "<strong>", "</strong>");
 
@@ -215,6 +216,15 @@ public class AAStock implements Runnable
         return data ;
     }
 
+    private String resetNumeric(String input)
+    {
+        if (!StringUtils.isNumeric(input))
+        {
+            return "N/A";
+        }
+        return input;
+    }
+
     private IndexQuoteData parseIndexHTMLByte(byte[] result, String index)
     {
         IndexQuoteData data = new IndexQuoteData();
@@ -224,9 +234,10 @@ public class AAStock implements Runnable
         {
             System.out.println(htmlStr);
         }
-        
+
         // Get Last
         data.last = extractStr(htmlStr, "ETFLast", "&nbsp;", "</span>");
+        data.last = resetNumeric(data.last);
 
         // Get Change
         isPos = false;
@@ -246,9 +257,11 @@ public class AAStock implements Runnable
 
         // Get High
         data.high = extractStr(htmlStr, "Range&nbsp;", "-", "</span>");
+        data.high = resetNumeric(data.high);
 
         // Get Low
         data.low = extractStr(htmlStr, "Range&nbsp;", ">", "-");
+        data.low = resetNumeric(data.low);
 
         // Get Open
         data.open = extractStr(htmlStr, "Open</div>", ">", "</div>");
@@ -267,7 +280,7 @@ public class AAStock implements Runnable
 
         // Get 52 week range
         data.fiftytwo_week_range = extractStr(htmlStr, "52-Week Range</td>", ">", "</td>");
-        
+
         return data;
     }
 
@@ -278,12 +291,12 @@ public class AAStock implements Runnable
         {
             return null;
         }
-        
+
         if (isPos)
         {
             return "+" + input;
         }
-        
+
         return "-" + input;
     }
     private String extractStr(String htmlStr, String startStr, String exactStartStr, String exactEndStr)
@@ -291,36 +304,36 @@ public class AAStock implements Runnable
         int startIndex = 0;
         int exactStartIndex = 0;
         int exactEndIndex = 0;
-        
+
         // Get Last
         startIndex = htmlStr.indexOf(startStr);
         if (startIndex == -1)
-        	return null;
-        
+            return null;
+
         startIndex += startStr.length();
-        
+
         exactStartIndex = htmlStr.indexOf(exactStartStr, startIndex) + exactStartStr.length();
         exactEndIndex = htmlStr.indexOf(exactEndStr, exactStartIndex);
-        
+
         if (exactStartIndex - startIndex > TAG_RANGE || exactStartIndex < startIndex)
         {
-        	return null;
+            return null;
         }
-        
+
         String result = htmlStr.substring(exactStartIndex, exactEndIndex).trim();
-        
-    	int innerStart = result.lastIndexOf(">");
-    	if (innerStart > -1)
-    	{
-    		result = result.substring(innerStart+1).trim();
-    	}
-        
+
+        int innerStart = result.lastIndexOf(">");
+        if (innerStart > -1)
+        {
+            result = result.substring(innerStart+1).trim();
+        }
+
         if (result.length() > VALUE_RANGE)
-        	return null;
-        
+            return null;
+
         return result;
     }
-    
+
     public static class IndexQuoteData
     {
         public String last;
@@ -334,7 +347,8 @@ public class AAStock implements Runnable
         public String two_month_range;
         public String three_month_range;
         public String fiftytwo_week_range;
-        
+
+        @Override
         public String toString()
         {
             StringBuilder sb = new StringBuilder();
@@ -351,7 +365,7 @@ public class AAStock implements Runnable
             return sb.toString();
         }
     }
-    
+
     public static class StockQuoteData
     {
         public String last;
@@ -366,7 +380,8 @@ public class AAStock implements Runnable
         public String lot_size;
         public String today_range;
         public String _52_week_range;
-        
+
+        @Override
         public String toString()
         {
             StringBuilder sb = new StringBuilder();
