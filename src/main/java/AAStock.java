@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 
 public class AAStock implements Runnable
 {
-    private static boolean isDebug = true;
+    private static boolean isDebug = false;
 
     private static int TAG_RANGE = 1000;
     private static int VALUE_RANGE = 50;
@@ -78,7 +78,11 @@ public class AAStock implements Runnable
                 {
                     continue;
                 }
-                if ("HSI".compareToIgnoreCase(line) == 0)
+                if ("quit".compareToIgnoreCase(line) == 0 || "exit".compareToIgnoreCase(line) == 0)
+                {
+                    System.exit(0);
+                }
+                else if ("HSI".compareToIgnoreCase(line) == 0)
                 {
                     onIndex("HSI");
                 }
