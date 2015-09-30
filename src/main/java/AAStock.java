@@ -8,12 +8,11 @@ import java.text.DecimalFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.apache.commons.lang3.StringUtils;
 
 
 public class AAStock implements Runnable
 {
-    private static boolean isDebug = false;
+    private static boolean isDebug = true;
 
     private static int TAG_RANGE = 1000;
     private static int VALUE_RANGE = 50;
@@ -218,9 +217,12 @@ public class AAStock implements Runnable
 
     private String resetNumeric(String input)
     {
-        if (!StringUtils.isNumeric(input))
+        for (char c : input.toCharArray())
         {
-            return "N/A";
+            if (Character.isAlphabetic(c))
+            {
+                return "N/A";
+            }
         }
         return input;
     }
@@ -236,7 +238,7 @@ public class AAStock implements Runnable
         }
 
         // Get Last
-        data.last = extractStr(htmlStr, "ETFLast", "&nbsp;", "</span>");
+        data.last = extractStr(htmlStr, "ETFLast", "</span>&nbsp;", "</span>");
         data.last = resetNumeric(data.last);
 
         // Get Change
