@@ -1,6 +1,5 @@
 package com.github.chanhohang;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.openjdk.jmh.annotations.Benchmark;
 
 public class JMH_SubString_Capitalize
@@ -9,7 +8,7 @@ public class JMH_SubString_Capitalize
     @Benchmark
     public String measureCapitalize_1()
     {
-        return capitalize( RandomStringUtils.random( 255 ) );
+        return capitalize( "someInputString" );
     }
 
     private String capitalize( String original )
