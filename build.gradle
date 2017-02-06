@@ -3,22 +3,49 @@ buildscript {
 		jcenter()
     	mavenCentral()
 	}
+    dependencies {
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.3.1"
+    }	
 } 
 
 apply plugin: 'eclipse'
 apply plugin: 'java'
+apply plugin: "me.champeau.gradle.jmh"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-group = 'chh.toys.'
+group = 'com.github.chanhohang'
 version = '1.0'
 
 repositories {
 	mavenCentral()
 }
+
 	
 dependencies {
 	compile group: 'net.sourceforge.htmlunit', name: 'htmlunit', version: '2.18'
 	testCompile group: 'junit', name: 'junit', version:'4.11'
+	
+	jmh 'commons-io:commons-io:2.4'
+    jmh 'org.openjdk.jmh:jmh-core:1.17.4'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.17.4'
+}
+
+jmh {
+   include = ['.*'] // include pattern (regular expression) for benchmarks to be executed
+   // exclude = ['some regular expression'] // exclude pattern (regular expression) for benchmarks to be executed
+   iterations = 10 // Number of measurement iterations to do.
+   benchmarkMode = ['thrpt','ss'] // Benchmark mode. Available modes are: [Throughput/thrpt, AverageTime/avgt, SampleTime/sample, SingleShotTime/ss, All/all]
+   batchSize = 1 // Batch size: number of benchmark method calls per operation. (some benchmark modes can ignore this setting)
+   fork = 0 // How many times to forks a single benchmark. Use 0 to disable forking altogether
+   failOnError = true // Should JMH fail immediately if any benchmark had experienced the unrecoverable error?
+   forceGC = false // Should JMH force GC between iterations?
+   operationsPerInvocation = 10 // Operations per invocation.
+   timeout = '1s' // Timeout for benchmark iteration.
+   timeUnit = 'ms' // Output time unit. Available time units are: [m, s, ms, us, ns].
+   verbosity = 'EXTRA' // Verbosity mode. Available modes are: [SILENT, NORMAL, EXTRA]
+
+   includeTests = true // Allows to include test sources into generate JMH jar, i.e. use it when benchmarks depend on the test classes.
+   duplicateClassesStrategy = 'warn' // Strategy to apply when encountring duplicate classes during creation of the fat jar (i.e. while executing jmhJar task)
 }
